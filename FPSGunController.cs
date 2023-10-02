@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
@@ -13,6 +14,9 @@ public class FPSGunController : MonoBehaviour
     public string wallTag, floorTag, enemyTag, waterTag;
     public GameObject wallHole, floorHole;
     public GameObject wallImpact, floorImpact, waterImpact, enemyImpact;
+
+    [HideInInspector]
+    public bool reloading;
 
     void Start()
     {
@@ -34,13 +38,17 @@ public class FPSGunController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha2) && inventory.Length > 1)
             StartCoroutine("ChangeGun", 1);
 
-        if (Input.GetKeyDown(KeyCode.R))
-            Reload();
 
-        if (currentWeapon.gunType == Enums.GunType.Automatic)
-            FireAutomatic();
-        else
-            FireSemiAutomatic();
+        if (!reloading)
+        {
+            if (Input.GetKeyDown(KeyCode.R))
+                Reload();
+
+            if (currentWeapon.gunType == Enums.GunType.Automatic)
+                FireAutomatic();
+            else
+                FireSemiAutomatic();
+        }
     }
 
     void FireAutomatic()
@@ -53,10 +61,19 @@ public class FPSGunController : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
+            if(currentWeapon.ammunition == 0)
+            {
+                Reload();
+                return;
+            }
+
+            currentWeapon.ammunition = Mathf.Clamp(currentWeapon.ammunition -= 1, 0, currentWeapon.maximumAmmo);
+
             animations.ToFire();
             cameraContainer.transform.position = cameraContainer.transform.position - (cameraContainer.transform.forward * currentWeapon.recoilForce);
 
             currentWeapon.fireSound.Play();
+
 
             RaycastHit hit;
             var destiny = Camera.main.transform.position + Camera.main.transform.forward * 1000;
@@ -90,8 +107,28 @@ public class FPSGunController : MonoBehaviour
 
     void Reload()
     {
-        //Implementar reload
+        if (currentWeapon.ammunition == currentWeapon.maximumAmmo)
+            return;
+
+        if (currentWeapon.ammunitionToReload == 0)
+        {
+            currentWeapon.noBulletsSound.Play();
+            return;
+        }
+
+        reloading = true;
+
         animations.ToReload();
+        currentWeapon.reloadSound.Play();
+
+        var difBullets = currentWeapon.maximumAmmo - currentWeapon.ammunition;
+        
+        if (difBullets > currentWeapon.ammunitionToReload)
+            currentWeapon.ammunition += currentWeapon.ammunitionToReload;
+        else
+            currentWeapon.ammunition += difBullets;
+
+        currentWeapon.ammunitionToReload = Mathf.Clamp(currentWeapon.ammunitionToReload -= difBullets, 0, currentWeapon.ammunitionToReload);
     }
 
     IEnumerator ChangeGun(int index)

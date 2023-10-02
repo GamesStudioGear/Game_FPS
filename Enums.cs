@@ -5,4 +5,9 @@ public class Enums
         SemiAutomatic,
         Automatic
     }
+
+    public enum ItemType
+    {
+        Ammo,
+    }
 }

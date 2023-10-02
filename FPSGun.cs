@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using static Enums;
 
@@ -14,6 +15,10 @@ public class FPSGun : MonoBehaviour
     public Transform firePoint;
     public GameObject muzzeEffect;
     public AudioSource fireSound;
+    public AudioSource noBulletsSound;
+    public AudioSource reloadSound;
+    public TextMeshProUGUI txtAmmunition;
+    public TextMeshProUGUI txtammunitionToReload;
 
     [HideInInspector]
     public Animator animator;
@@ -28,4 +33,14 @@ public class FPSGun : MonoBehaviour
         model = this.gameObject;
     }
 
+    private void Update()
+    {
+        txtAmmunition.text = ammunition.ToString("00");
+        txtammunitionToReload.text = ammunitionToReload.ToString("00");
+    }
+
+    public void StopReload()
+    {
+        GameObject.FindGameObjectWithTag("Player").GetComponent<FPSGunController>().reloading = false;
+    }
 }
